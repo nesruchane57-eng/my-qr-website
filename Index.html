@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f766e">
+<title>AL NASRU - Tracking & Admin</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#0f172a;font-family:Arial,sans-serif}
+.wrap{max-width:520px;margin:auto;min-height:100vh;background:#fff}
+.header{background:#0f766e;color:#fff;text-align:center;padding:22px 16px}
+.header h1{margin:0;font-size:27px;letter-spacing:2px}
+.header p{margin:5px 0;font-size:12px}
+.phone{font-weight:bold;margin-top:8px}
+.tabs{display:flex;padding:10px;background:#ecfeff;gap:8px}
+.tab{flex:1;border:0;padding:12px;border-radius:9px;background:#cbd5e1;font-weight:bold;cursor:pointer}
+.tab.active{background:#0f766e;color:#fff}
+.content{padding:16px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:15px;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 6px}
+input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;outline:none}
+input:focus,select:focus{border-color:#0f766e}
+.btn{width:100%;border:0;border-radius:9px;padding:13px;margin-top:12px;background:#0f766e;color:#fff;font-size:15px;font-weight:bold;cursor:pointer}
+.btn:disabled{opacity:.6}
+.secondary{background:#334155}
+.danger{background:#dc2626}
+.hidden{display:none!important}
+.msg{padding:13px;border-radius:9px;margin-top:12px;line-height:1.5;text-align:center}
+.error{background:#fee2e2;color:#991b1b}
+.success{background:#dcfce7;color:#166534}
+.info{background:#e0f2fe;color:#075985}
+.result{border:1px solid #cbd5e1;border-radius:14px;padding:16px;margin-top:14px}
+.result h3{margin:0 0 8px}
+.code{color:#b45309;font-weight:bold}
+.badge{display:inline-block;padding:5px 10px;border-radius:20px;background:#dcfce7;color:#166534;font-size:12px;font-weight:bold}
+.details{line-height:1.8;color:#475569;font-size:14px}
+.steps{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px}
+.step{padding:7px 0;color:#94a3b8}
+.step.done,.step.active{color:#0f766e;font-weight:bold}
+.qr{margin-top:15px;text-align:center;background:#f8fafc;border-radius:10px;padding:14px}
+.qrbox{display:inline-block;background:#fff;padding:8px}
+.link{font-size:11px;color:#64748b;word-break:break-all;margin-top:8px}
+.small{font-size:12px;color:#64748b;line-height:1.5}
+.admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.admin-email{font-size:12px;color:#0f766e;font-weight:bold;word-break:break-all}
+footer{text-align:center;color:#64748b;font-size:11px;padding:20px}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header class="header">
+<h1>AL NASRU</h1>
+<p>FOREIGN EMPLOYMENT & WORKER RECRUITMENT AGENCY</p>
+<p>የውጭ ሀገር ስራ እና ሰራተኛ አገናኝ ኤጀንሲ</p>
+<div class="phone">☎ 0900494900</div>
+</header>
+
+<div class="tabs">
+<button id="trackTabBtn" class="tab active" onclick="openTab('track')">
+Track Application
+</button>
+
+<button id="adminTabBtn" class="tab" onclick="openTab('admin')">
+Admin
+</button>
+</div>
+
+<main class="content">
+
+<section id="trackSection">
+
+<div class="card">
+<h2 style="margin:0 0 5px">Track Application</h2>
+
+<div class="small">
+Receipt Code ወይም Phone Number በመጠቀም ፋይልዎን ይከታተሉ።
+</div>
+
+<label>Receipt Code / Phone Number</label>
+
+<input
+id="searchInput"
+type="text"
+placeholder="ATT-2026-0001 / 0912345678">
+
+<button
+id="searchBtn"
+class="btn"
+onclick="searchApplication()">
+Search / ፈልግ
+</button>
+
+<div id="searchMessage"></div>
+</div>
+
+<div id="results"></div>
+
+</section>
+
+
+<section id="adminSection" class="hidden">
+
+<div id="loginBox" class="card">
+
+<h2 style="margin:0 0 6px">Admin Login</h2>
+
+<div class="small">
+Supabase Auth Email + Password በመጠቀም ይግቡ።
+</div>
+
+<label>Email</label>
+
+<input
+id="loginEmail"
+type="email"
+placeholder="admin@example.com"
+autocomplete="username">
+
+<label>Password</label>
+
+<input
+id="loginPassword"
+type="password"
+placeholder="Password"
+autocomplete="current-password">
+
+<button
+id="loginBtn"
+class="btn"
+onclick="adminLogin()">
+Login / ግባ
+</button>
+
+<div id="loginMessage"></div>
+
+</div>
+
+
+<div id="dashboard" class="hidden">
+
+<div class="admin-top">
+
+<div>
+<div style="font-weight:bold">Admin Dashboard</div>
+<div id="adminEmail" class="admin-email"></div>
+</div>
+
+<button
+class="btn danger"
+style="width:auto;margin:0;padding:9px 12px"
+onclick="adminLogout()">
+Logout
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2 style="margin:0 0 6px">
+Add / Update Application
+</h2>
+
+<div class="small">
+አንድ Receipt Code አንድ የደንበኛ ፋይልን ብቻ ይወክላል።
+</div>
+
+<label>Customer Name *</label>
+<input id="customerName" type="text" placeholder="Customer full name">
+
+<label>Receipt Code / file_code *</label>
+<input id="fileCode" type="text" placeholder="ATT-2026-0001">
+
+<label>Phone Number *</label>
+<input id="phoneNumber" type="text" placeholder="0912345678">
+
+<label>Passport Number</label>
+<input id="passportNumber" type="text" placeholder="Passport number">
+
+<label>MOFA Reference</label>
+<input id="mofaRef" type="text" placeholder="ATS-2026...">
+
+<label>Status</label>
+
+<select id="status">
+<option value="Received">Received</option>
+<option value="At embassy">At embassy</option>
+<option value="Embassy done">Embassy done</option>
+<option value="Ready for pickup">Ready for pickup</option>
+<option value="Collected">Collected</option>
+</select>
+
+<button
+id="saveBtn"
+class="btn"
+onclick="saveApplication()">
+Save Application / አስቀምጥ
+</button>
+
+<button
+id="whatsappBtn"
+class="btn secondary"
+onclick="shareWhatsApp()">
+Create WhatsApp Tracking Link
+</button>
+
+<div id="saveMessage"></div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="margin-top:0">
+Find Existing File
+</h3>
+
+<input
+id="adminSearch"
+type="text"
+placeholder="Receipt Code">
+
+<button
+class="btn secondary"
+onclick="loadForEdit()">
+Load / አምጣ
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<footer>
+AL NASRU Agency Tracking System<br>
+☎ 0900494900
+</footer>
+
+</div>
+
+
+<script>
+
+/* ================================
+   SUPABASE SETTINGS
+================================ */
+
+const SUPABASE_URL =
+'https://cxlaebwiibzvedaupmtr.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_wwJIy_f5u8ZKYYKi1w87aA_CVHt_7Ou';
+
+const WEBSITE_URL =
+'https://nesruchane57-eng.github.io/my-qr-website/';
+
+
+const db =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+
+/* ================================
+   STATUS LIST
+================================ */
+
+const STATUSES = [
+'Received',
+'At embassy',
+'Embassy done',
+'Ready for pickup',
+'Collected'
+];
+
+
+/* ================================
+   HELPER
+================================ */
+
+function $(id){
+return document.getElementById(id);
+}
+
+
+function escapeHtml(value){
+
+return String(value ?? '')
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#039;');
+
+}
+
+
+/* ================================
+   PHONE
+================================ */
+
+function normalizePhone(value){
+
+let p =
+String(value || '')
+.replace(/\D/g,'');
+
+if(p.startsWith('0')){
+p =
+'251' + p.slice(1);
+}
+
+return p;
+
+}
+
+
+/* =================================================
+   IMPORTANT:
+   EVERY QR CODE USES ONLY THE UNIQUE FILE CODE
+================================================= */
+
+function cleanFileCode(code){
+
+return String(code || '')
+.trim()
+.toUpperCase();
+
+}
+
+
+function trackingLink(code){
+
+const cleanCode =
+cleanFileCode(code);
+
+return WEBSITE_URL +
+'?code=' +
+encodeURIComponent(cleanCode);
+
+}
+
+
+/* ================================
+   TABS
+================================ */
+
+function openTab(tab){
+
+$('trackSection')
+.classList
+.toggle('hidden',tab !== 'track');
+
+$('adminSection')
+.classList
+.toggle('hidden',tab !== 'admin');
+
+$('trackTabBtn')
+.classList
+.toggle('active',tab === 'track');
+
+$('adminTabBtn')
+.classList
+.toggle('active',tab === 'admin');
+
+}
+
+
+/* ================================
+   MESSAGE
+================================ */
+
+function showMessage(
+id,
+text,
+type='info'
+){
+
+$(id).innerHTML =
+'<div class="msg '+type+'">'+
+escapeHtml(text)+
+'</div>';
+
+}
+
+
+/* ================================
+   AUTH
+================================ */
+
+async function checkSession(){
+
+try{
+
+const {data,error} =
+await db.auth.getSession();
+
+if(error) throw error;
+
+if(data.session){
+
+showDashboard(
+data.session.user
+);
+
+}
+
+}catch(e){
+
+console.error(e);
+
+}
+
+}
+
+
+db.auth.onAuthStateChange(
+(event,session)=>{
+
+if(session){
+
+showDashboard(
+session.user
+);
+
+}else{
+
+hideDashboard();
+
+}
+
+});
+
+
+function showDashboard(user){
+
+$('loginBox')
+.classList
+.add('hidden');
+
+$('dashboard')
+.classList
+.remove('hidden');
+
+$('adminEmail')
+.textContent =
+user?.email || 'Admin';
+
+}
+
+
+function hideDashboard(){
+
+$('loginBox')
+.classList
+.remove('hidden');
+
+$('dashboard')
+.classList
+.add('hidden');
+
+$('adminEmail')
+.textContent = '';
+
+}
+
+
+/* ================================
+   LOGIN
+================================ */
+
+async function adminLogin(){
+
+const email =
+$('loginEmail')
+.value
+.trim();
+
+const password =
+$('loginPassword')
+.value;
+
+
+if(!email || !password){
+
+showMessage(
+'loginMessage',
+'Email እና Password ያስገቡ።',
+'error'
+);
+
+return;
+
+}
+
+
+const btn =
+$('loginBtn');
+
+btn.disabled = true;
+
+btn.textContent =
+'Logging in...';
+
+
+try{
+
+const {data,error} =
+await db.auth.signInWithPassword({
+
+email,
+password
+
+});
+
+
+if(error) throw error;
+
+showDashboard(
+data.user
+);
+
+$('loginPassword').value = '';
+
+showMessage(
+'loginMessage',
+'Login successful / በትክክል ገብተዋል።',
+'success'
+);
+
+
+}catch(e){
+
+showMessage(
+'loginMessage',
+'Login failed: '+
+(e.message || 'Unknown error'),
+'error'
+);
+
+}finally{
+
+btn.disabled = false;
+
+btn.textContent =
+'Login / ግባ';
+
+}
+
+}
+
+
+/* ================================
+   LOGOUT
+================================ */
+
+async function adminLogout(){
+
+await db.auth.signOut();
+
+hideDashboard();
+
+}
+
+
+/* =====================================================
+   SEARCH
+   IMPORTANT:
+   CODE SEARCH = EXACT ONE FILE
+   PHONE SEARCH = MAY RETURN MULTIPLE FILES
+===================================================== */
+
+async function searchApplication(){
+
+const raw =
+$('searchInput')
+.value
+.trim();
+
+
+if(!raw){
+
+showMessage(
+'searchMessage',
+'Receipt Code ወይም Phone Number ያስገቡ።',
+'error'
+);
+
+return;
+
+}
+
+
+const btn =
+$('searchBtn');
+
+btn.disabled = true;
+
+btn.textContent =
+'Searching... / በመፈለግ ላይ...';
+
+$('results').innerHTML = '';
+
+
+try{
+
+let data = [];
+
+
+/* =========================================
+   FIRST: EXACT RECEIPT CODE SEARCH
+========================================= */
+
+const code =
+cleanFileCode(raw);
+
+
+const codeResult =
+await db
+.from('files')
+.select(
+'file_code,customer_name,phone_number,passport_number,mofa_ref,status'
+)
+.eq('file_code',code)
+.limit(1);
+
+
+if(codeResult.error){
+
+throw codeResult.error;
+
+}
+
+
+if(codeResult.data &&
+codeResult.data.length > 0){
+
+data =
+codeResult.data;
+
+}
+
+
+/* =========================================
+   SECOND: PHONE SEARCH ONLY IF CODE NOT FOUND
+========================================= */
+
+if(data.length === 0){
+
+const originalPhone =
+String(raw)
+.replace(/\s/g,'');
+
+const phone =
+normalizePhone(originalPhone);
+
+
+/* Try original phone */
+let phoneResult =
+await db
+.from('files')
+.select(
+'file_code,customer_name,phone_number,passport_number,mofa_ref,status'
+)
+.eq('phone_number',originalPhone);
+
+
+if(phoneResult.error){
+
+throw phoneResult.error;
+
+}
+
+
+data =
+phoneResult.data || [];
+
+
+/* Try normalized Ethiopian phone */
+if(
+data.length === 0 &&
+phone !== originalPhone
+){
+
+phoneResult =
+await db
+.from('files')
+.select(
+'file_code,customer_name,phone_number,passport_number,mofa_ref,status'
+)
+.eq('phone_number',phone);
+
+if(phoneResult.error){
+
+throw phoneResult.error;
+
+}
+
+data =
+phoneResult.data || [];
+
+}
+
+}
+
+
+/* =========================================
+   NOTHING FOUND
+========================================= */
+
+if(!data || data.length === 0){
+
+showMessage(
+'searchMessage',
+'ይህ Receipt Code / Phone የሚዛመድ ፋይል አልተገኘም።',
+'error'
+);
+
+return;
+
+}
+
+
+/* =========================================
+   RENDER RESULTS
+========================================= */
+
+data.forEach(
+item => renderResult(item)
+);
+
+showMessage(
+'searchMessage',
+'ፋይሉ ተገኝቷል።',
+'success'
+);
+
+
+}catch(e){
+
+console.error(e);
+
+showMessage(
+'searchMessage',
+'Search failed: '+
+(e.message || e),
+'error'
+);
+
+}finally{
+
+btn.disabled = false;
+
+btn.textContent =
+'Search / ፈልግ';
+
+}
+
+}
+
+
+/* ================================
+   RESULT
+================================ */
+
+function renderResult(item){
+
+const code =
+cleanFileCode(item.file_code);
+
+
+/*
+IMPORTANT:
+The QR link is created from THIS
+record's file_code only.
+*/
+
+const link =
+trackingLink(code);
+
+
+const qrId =
+'qr_' +
+Math.random()
+.toString(36)
+.slice(2);
+
+
+let current =
+STATUSES.indexOf(
+item.status
+);
+
+if(current < 0){
+
+current = 0;
+
+}
+
+
+let steps = '';
+
+
+STATUSES.forEach(
+(s,i)=>{
+
+const cls =
+i < current
+? 'done'
+: (i === current
+? 'active'
+: '');
+
+steps +=
+'<div class="step '+cls+'">'+
+'● '+
+escapeHtml(s)+
+'</div>';
+
+});
+
+
+const box =
+document.createElement('div');
+
+box.className =
+'result';
+
+
+box.innerHTML =
+
+'<div class="code">'+
+'Receipt: '+
+escapeHtml(code)+
+'</div>'+
+
+'<h3>'+
+escapeHtml(
+item.customer_name ||
+'N/A'
+)+
+'</h3>'+
+
+'<div>'+
+'<span class="badge">'+
+escapeHtml(
+item.status ||
+'Received'
+)+
+'</span>'+
+'</div>'+
+
+'<div class="details">'+
+
+'<div>Phone: '+
+escapeHtml(
+item.phone_number ||
+'N/A'
+)+
+'</div>'+
+
+'<div>Passport: '+
+escapeHtml(
+item.passport_number ||
+'N/A'
+)+
+'</div>'+
+
+'<div>MOFA Reference: '+
+escapeHtml(
+item.mofa_ref ||
+'N/A'
+)+
+'</div>'+
+
+'</div>'+
+
+'<div class="steps">'+
+steps+
+'</div>'+
+
+'<div class="qr">'+
+
+'<div id="'+
+qrId+
+'" class="qrbox"></div>'+
+
+'<div style="font-weight:bold;margin-top:8px">'+
+'Scan to Track THIS File'+
+'</div>'+
+
+'<div class="link">'+
+escapeHtml(link)+
+'</div>'+
+
+'<button class="btn secondary" '+
+'style="max-width:280px" '+
+'onclick=\'copyLink('+
+JSON.stringify(link)+
+')\'>Copy Tracking Link</button>'+
+
+'</div>';
+
+
+$('results')
+.appendChild(box);
+
+
+/* CREATE QR FOR THIS EXACT FILE */
+
+new QRCode(
+$(qrId),
+{
+text: link,
+width:170,
+height:170,
+correctLevel:
+QRCode.CorrectLevel.M
+}
+);
+
+}
+
+
+/* ================================
+   SAVE APPLICATION
+================================ */
+
+async function saveApplication(){
+
+const customer_name =
+$('customerName')
+.value
+.trim();
+
+const file_code =
+cleanFileCode(
+$('fileCode').value
+);
+
+const phone_number =
+$('phoneNumber')
+.value
+.trim();
+
+const passport_number =
+$('passportNumber')
+.value
+.trim();
+
+const mofa_ref =
+$('mofaRef')
+.value
+.trim();
+
+const status =
+$('status').value;
+
+
+if(
+!customer_name ||
+!file_code ||
+!phone_number
+){
+
+showMessage(
+'saveMessage',
+'Customer Name, Receipt Code እና Phone Number ያስፈልጋሉ።',
+'error'
+);
+
+return;
+
+}
+
+
+const btn =
+$('saveBtn');
+
+btn.disabled = true;
+
+btn.textContent =
+'Saving... / በማስቀመጥ ላይ...';
+
+
+try{
+
+const {data:userData} =
+await db.auth.getUser();
+
+
+if(!userData.user){
+
+throw new Error(
+'Admin login ያስፈልጋል።'
+);
+
+}
+
+
+/*
+IMPORTANT:
+file_code is used as the unique key.
+The same file_code updates the same file.
+*/
+
+const {data,error} =
+await db
+.from('files')
+.upsert(
+[{
+
+file_code,
+customer_name,
+phone_number,
+passport_number,
+mofa_ref,
+status
+
+}],
+{
+onConflict:'file_code'
+}
+)
+.select()
+.single();
+
+
+if(error){
+
+throw error;
+
+}
+
+
+const link =
+trackingLink(file_code);
+
+
+/* WhatsApp link is created from SAME file_code */
+
+const wa =
+'https://wa.me/'+
+normalizePhone(phone_number)+
+'?text='+
+encodeURIComponent(
+
+'AL NASRU - MOFA ATTESTATION\n\n'+
+
+'Customer: '+
+customer_name+
+'\n'+
+
+'Receipt: '+
+file_code+
+'\n'+
+
+'MOFA Reference: '+
+(mofa_ref || 'N/A')+
+'\n'+
+
+'Status: '+
+status+
+'\n\n'+
+
+'Track Application:\n'+
+link
+
+);
+
+
+$('whatsappBtn')
+.dataset.url = wa;
+
+
+showMessage(
+'saveMessage',
+'ተሳክቷል! Receipt Code '+
+file_code+
+' ተቀምጧል።',
+'success'
+);
+
+
+$('adminSearch')
+.value =
+file_code;
+
+
+}catch(e){
+
+console.error(e);
+
+showMessage(
+'saveMessage',
+'Save failed: '+
+(e.message || e),
+'error'
+);
+
+}finally{
+
+btn.disabled = false;
+
+btn.textContent =
+'Save Application / አስቀምጥ';
+
+}
+
+}
+
+
+/* ================================
+   WHATSAPP
+================================ */
+
+function shareWhatsApp(){
+
+const url =
+$('whatsappBtn')
+.dataset.url;
+
+
+if(!url){
+
+showMessage(
+'saveMessage',
+'መጀመሪያ Application አስቀምጡ።',
+'error'
+);
+
+return;
+
+}
+
+
+window.open(
+url,
+'_blank'
+);
+
+}
+
+
+/* ================================
+   LOAD EXISTING
+================================ */
+
+async function loadForEdit(){
+
+const code =
+cleanFileCode(
+$('adminSearch').value
+);
+
+
+if(!code){
+
+showMessage(
+'saveMessage',
+'Receipt Code ያስገቡ።',
+'error'
+);
+
+return;
+
+}
+
+
+try{
+
+const {data,error} =
+await db
+.from('files')
+.select(
+'file_code,customer_name,phone_number,passport_number,mofa_ref,status'
+)
+.eq('file_code',code)
+.limit(1)
+.maybeSingle();
+
+
+if(error){
+
+throw error;
+
+}
+
+
+if(!data){
+
+showMessage(
+'saveMessage',
+'ይህ Receipt Code አልተገኘም።',
+'error'
+);
+
+return;
+
+}
+
+
+$('customerName').value =
+data.customer_name || '';
+
+$('fileCode').value =
+data.file_code || '';
+
+$('phoneNumber').value =
+data.phone_number || '';
+
+$('passportNumber').value =
+data.passport_number || '';
+
+$('mofaRef').value =
+data.mofa_ref || '';
+
+$('status').value =
+STATUSES.includes(data.status)
+? data.status
+: 'Received';
+
+
+showMessage(
+'saveMessage',
+'ፋይሉ ተገኝቷል፤ አሁን ማሻሻል ይችላሉ።',
+'success'
+);
+
+
+}catch(e){
+
+showMessage(
+'saveMessage',
+'Load failed: '+
+(e.message || e),
+'error'
+);
+
+}
+
+}
+
+
+/* ================================
+   COPY LINK
+================================ */
+
+async function copyLink(link){
+
+try{
+
+await navigator.clipboard
+.writeText(link);
+
+alert(
+'Tracking Link copied / ሊንኩ ተቀድቷል።'
+);
+
+}catch(e){
+
+prompt(
+'Copy this link:',
+link
+);
+
+}
+
+}
+
+
+/* ==================================================
+   AUTO TRACKING FROM QR / WHATSAPP
+   ONLY ?code= IS ACCEPTED
+================================================== */
+
+window.addEventListener(
+'load',
+async ()=>{
+
+await checkSession();
+
+
+const params =
+new URLSearchParams(
+location.search
+);
+
+
+/*
+The QR code must contain ?code=UNIQUE_FILE_CODE
+*/
+
+const code =
+cleanFileCode(
+params.get('code') || ''
+);
+
+
+if(code){
+
+openTab('track');
+
+$('searchInput').value =
+code;
+
+
+/*
+Search EXACT file code.
+No phone search is used here.
+*/
+
+await searchApplication();
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
